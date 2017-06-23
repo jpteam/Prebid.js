@@ -152,14 +152,14 @@ describe('c1x adapter tests', function () {
         endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
         domain: 'http://c1exchange.com/'
       },
-        {
-          siteId: '9999',
-          // pixelId: 9999,
-          sizes: [[300, 250]],
-          adId: 'div-gpt-ad-1494499685659-0',
-          endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-          domain: 'http://c1exchange.com/'
-        }]
+      {
+        siteId: '9999',
+        // pixelId: 9999,
+        sizes: [[300, 250]],
+        adId: 'div-gpt-ad-1494499685659-0',
+        endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
+        domain: 'http://c1exchange.com/'
+      }]
     };
     var response = JSON.stringify([{'bid': true, 'adId': 'div-gpt-ad-44697-3', 'cpm': 0.092, 'ad': '<script>document.write(\'<img src=\"https://trks.c1exchange.com/trk/c?pid=124&et=i&profileid=124&pubgrpid=NA&cpm=0.092&gen-ts=1496922418719&region=east&siteid=14793&rndid=1072038560&imprtype=IMAGE&adomain=[dell.co.in]&adaptertype=HTTP&urid=6280302705506284354&uimprid=7662199905952189060&urespid=0&at=1&pus=N&netprice=0.092&grossprice=0.092&sspauctionprice=0.092&dealId=NA&tagid=NA&publisherId=NA&dspBidPrice=0.092&dspcid=358496&adsize=728x90&adslot=div-gpt-ad-44697-3\" style=\"display:none;\"/>\')</script><script>document.write(\'<img src=\"https://s6-pixel.c1exchange.com/pubpixel/1000\" style=\"display:none;\"/>\')</script><script>document.write(\'<img src=\"https://pixel.mathtag.com/sync/img?redir=https://cms.c1exchange.com/cookie/match/mm?mmuuid=[MM_UUID]&mt_uuid=[MM_UUID]&no_iframe=1&apn=\" style=\"display:none\"/>\');</script><script language=\'JavaScript\' src=\'https://tags.mathtag.com/notify/js?exch=gor&id=5aW95q2jLzEzLyAvWmpNNU1EVTROV0V0TVRSaVpDMDBaakF3TFdKbFpURXRaR1EwWXpRd01EUXpPRFUzLzgzOTgwMTAxMDcyMDA3OTQxMC80MjY3MDU2LzIyMDI1OTkvNTcvNHRCQm41TUF5TnpwU1UwUnotWURRUFo0ZjhobzhSMko3SjlxMWt2RGZITS8xLzU3LzE0OTU1MjgwNzMvMC80Mjc2OTkvMTk0NTY4NDIyNS8xNTgzNTUvMzU4NDk2LzEvMC8wL1pqTTVNRFU0TldFdE1UUmlaQzAwWmpBd0xXSmxaVEV0WkdRMFl6UXdNRFF6T0RVMy8wLzAvMC8wLzAv/bNi589vo2QweoiBCN-adWjOKy2E&sid=2202599&cid=4267056&nodeid=1070&price=0.092&group=us-east&auctionid=839801010720079410&bid=&pbs_id=839801010720079410&bp=a_ajcdia\'></script>', 'width': 728, 'height': 90}, {'bid': true, 'adId': 'div-gpt-ad-1494499685659-0', 'cpm': 3.31, 'ad': '<div><a target=\"_new\" href=\"http://c1exchange.com\"><img src=\"https://placeholdit.imgix.net/~text?txtsize=38&txt=C1X%20Ad%20300x250&w=300&h=250&txttrack=0\"></a></div>', 'width': 300, 'height': 250}]);
     it('callback function should exist', function () {
