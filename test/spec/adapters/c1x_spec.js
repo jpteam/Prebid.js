@@ -1,23 +1,45 @@
-describe('c1x adapter tests', function () {
-  var expect = require('chai').expect;
-  var urlParse = require('url-parse');
-  // FYI: querystringify will perform encoding/decoding
-  var querystringify = require('querystringify');
-  var adapter = require('src/adapters/c1x');
-  var adLoader = require('src/adloader');
-  var bidmanager = require('src/bidmanager');
+import {expect} from 'chai';
+import C1XAdapter from 'src/adapters/c1x';
+import bidmanager from 'src/bidmanager';
+import adLoader from 'src/adloader';
+import urlParse from 'url-parse';
+// FYI: querystringify will perform encoding/decoding
+import querystringify from 'querystringify';
+
+describe('c1x adapter tests', () => {
   window.pbjs = window.pbjs || {};
   if (typeof (pbjs) === 'undefined') {
     var pbjs = window.pbjs;
   }
   let stubLoadScript;
-  beforeEach(function () {
+  let adapter;
+  let bidderSettingParams = {
+    bidderCode: 'c1x',
+    bids: [{
+      siteId: '9999',
+      pixelId: 9999,
+      sizes: [[300, 250]],
+      adId: 'div-c1x-ht',
+      endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
+      domain: 'http://c1exchange.com/'
+    }]
+  };
+
+  beforeEach(() => {
     stubLoadScript = sinon.stub(adLoader, 'loadScript');
+    adapter = new C1XAdapter();
   });
-  afterEach(function () {
+  afterEach(() => {
     stubLoadScript.restore();
   });
-  describe('creation of bid url', function () {
+
+  describe('check callBids()', () => {
+    it('exists and is a function', () => {
+      expect(adapter.callBids).to.exist.and.to.be.a('function');
+    });
+  });
+
+  describe('creation of bid url', () => {
     if (typeof (pbjs._bidsReceived) === 'undefined') {
       pbjs._bidsReceived = [];
     }
@@ -27,34 +49,12 @@ describe('c1x adapter tests', function () {
     if (typeof (pbjs._adsReceived) === 'undefined') {
       pbjs._adsReceived = [];
     }
-    it('should be called only once', function () {
-      var params = {
-        bidderCode: 'c1x',
-        bids: [{
-          siteId: '9999',
-          pixelId: 9999,
-          sizes: [[300, 250]],
-          adId: 'div-c1x-ht',
-          endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-          domain: 'http://c1exchange.com/'
-        }]
-      };
-      adapter().callBids(params);
+    it('should be called only once', () => {
+      adapter.callBids(bidderSettingParams);
       sinon.assert.calledOnce(stubLoadScript);
     });
     it('should fix parameter name', function () {
-      var params = {
-        bidderCode: 'c1x',
-        bids: [{
-          siteId: '9999',
-          pixelId: 9999,
-          sizes: [[300, 250]],
-          adId: 'div-c1x-ht',
-          endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-          domain: 'http://c1exchange.com/'
-        }]
-      };
-      adapter().callBids(params);
+      adapter.callBids(bidderSettingParams);
       var bidUrl = stubLoadScript.getCall(0).args[0];
       sinon.assert.calledWith(stubLoadScript, bidUrl);
       var parsedBidUrl = urlParse(bidUrl);
@@ -88,7 +88,7 @@ describe('c1x adapter tests', function () {
           domain: 'http://c1exchange.com/'
         }]
       };
-      adapter().callBids(params);
+      adapter.callBids(params);
     });
   });
   describe('creation of bid url with optional parameters', function () {
@@ -117,7 +117,7 @@ describe('c1x adapter tests', function () {
           dspid: 4288
         }]
       };
-      adapter().callBids(params);
+      adapter.callBids(params);
       var bidUrl = stubLoadScript.getCall(0).args[0];
       sinon.assert.calledWith(stubLoadScript, bidUrl);
       var parsedBidUrl = urlParse(bidUrl);
@@ -167,7 +167,7 @@ describe('c1x adapter tests', function () {
     });
     it('bidmanager.addBidResponse should be called twice with correct arguments', function () {
       var stubAddBidResponse = sinon.stub(bidmanager, 'addBidResponse');
-      adapter().callBids(params);
+      adapter.callBids(params);
       var adUnits = new Array();
       var unit = new Object();
       unit.bids = [params];
@@ -228,7 +228,7 @@ describe('c1x adapter tests', function () {
     });
     it('bidmanager.addBidResponse should be called with correct arguments and responding with no bid', function () {
       var stubAddBidResponse = sinon.stub(bidmanager, 'addBidResponse');
-      adapter().callBids(params);
+      adapter.callBids(params);
       var adUnits = new Array();
       var unit = new Object();
       unit.bids = [params];
