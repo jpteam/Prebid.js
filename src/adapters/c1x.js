@@ -16,11 +16,22 @@ var C1XAdapter = function C1XAdapter() {
   // default endpoint. Can be overridden by adding an "endpoint" property to the first param in bidder config.
   var ENDPOINT = 'http://ht-integration.c1exchange.com:9000/ht',
     PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/',
-    PIXEL_FIRE_DELAY = 3000;
+    PIXEL_FIRE_DELAY = 3000,
+    ERROR_MESS = {
+      noSite: 'C1X:ERROR no site id supplied',
+      noBid: 'C1X:INFO creating a NO bid for Adunit: ',
+      bidWin: 'C1X:INFO creating a bid for Adunit: '
+    };
+
   var pbjs = window.pbjs || {};
-  pbjs._c1xResponse = function(c1xresponse) {
-    if (c1xresponse) {
-      var response = JSON.parse(c1xresponse);
+
+  pbjs._c1xResponse = function(c1xResponse) {
+    if (c1xResponse) {
+      var response = c1xResponse;
+
+      if (typeof c1xResponse === CONSTANTS.objectType_string) {
+        response = JSON.parse(c1xResponse);
+      }
       if (response) {
         for (var i = 0; i < response.length; i++) {
           var data = response[i],
@@ -44,6 +55,19 @@ var C1XAdapter = function C1XAdapter() {
         }
       }
     }
+  };
+
+  var pbjs = window.pbjs || {};
+
+  function getSettings(key) {
+    if (pbjs && pbjs.bidderSettings) {
+      var c1xSettings = pbjs.bidderSettings['c1x'];
+      if (c1xSettings) {
+        return c1xSettings[key];
+      }
+    } else {
+      return null;
+    }
   }
   // inject the audience pixel only if pbjs.bidderSettings['c1x'].pixelId is set.
   function injectAudiencePixel(pixel) {
@@ -54,6 +78,7 @@ var C1XAdapter = function C1XAdapter() {
         var pixel = document.createElement('img');
         pixel.width = 1;
         pixel.height = 1;
+        pixel.style = 'display:none;';
         var useSSL = document.location.protocol;
         pixel.src = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
         document.body.insertBefore(pixel, null);
@@ -62,18 +87,21 @@ var C1XAdapter = function C1XAdapter() {
   }
   function _callBids(params) {
     var bids = params.bids;
-    if (bids[0].pixelId) {
-      injectAudiencePixel(bids[0].pixelId);
+    if (bids[0].pixelId || getSettings('pixelId')) {
+      var pixelId = bids[0].pixelId ? bids[0].pixelId : getSettings('pixelId');
+      injectAudiencePixel(pixelId);
     }
-    var siteId = bids[0].siteId;
+
+    var siteId = bids[0].siteId ? bids[0].siteId : getSettings('siteId');
     if (!siteId) {
-      console.log('c1x: error - no site id supplied!');
+      console.log(ERROR_MESS.noSite);
       return;
     }
+
     var options = ['adunits=' + bids.length];
     options.push('site=' + siteId);
     for (var i = 0; i < bids.length; i++) {
-      options.push('a' + (i + 1) + '=' + bids[i].adId);
+      options.push('a' + (i + 1) + '=' + bids[i].placementCode);
       var sizes = bids[i].sizes,
         sizeStr = sizes.reduce(function(prev, current) { return prev + (prev === '' ? '' : ',') + current.join('x') }, '');
 // send floor price if the setting is available.
@@ -95,6 +123,9 @@ var C1XAdapter = function C1XAdapter() {
       options.push('dspid=' + bids[0].dspid);
     }
     var url = c1xEndpoint + '?' + options.join('&');
+    window._c1xResponse = function (c1xResponse) {
+      pbjs._c1xResponse(c1xResponse);
+    };
     adloader.loadScript(url);
   }
   // Export the callBids function, so that prebid.js can execute this function
