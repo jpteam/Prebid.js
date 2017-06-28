@@ -6,6 +6,20 @@ import urlParse from 'url-parse';
 // FYI: querystringify will perform encoding/decoding
 import querystringify from 'querystringify';
 
+let getDefaultBidderSetting = () => {
+  return {
+    bidderCode: 'c1x',
+    bids: [{
+      siteId: 9999,
+      pixelId: 9999,
+      sizes: [[300, 250]],
+      placementCode: 'div-c1x-ht',
+      endpoint: 'http://test.c1exchange.com:2000/ht',
+      domain: 'http://c1exchange.com/'
+    }]
+  };
+};
+
 describe('c1x adapter tests', () => {
   window.pbjs = window.pbjs || {};
   if (typeof (pbjs) === 'undefined') {
@@ -13,17 +27,14 @@ describe('c1x adapter tests', () => {
   }
   let stubLoadScript;
   let adapter;
-  let bidderSettingParams = {
-    bidderCode: 'c1x',
-    bids: [{
-      siteId: '9999',
-      pixelId: 9999,
-      sizes: [[300, 250]],
-      adId: 'div-c1x-ht',
-      endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-      domain: 'http://c1exchange.com/'
-    }]
-  };
+
+  function createBidderRequest(bids) {
+    let bidderRequest = getDefaultBidderSetting();
+    if (bids && Array.isArray(bids)) {
+      bidderRequest.bids = bids;
+    }
+    return bidderRequest;
+  }
 
   beforeEach(() => {
     stubLoadScript = sinon.stub(adLoader, 'loadScript');
@@ -38,45 +49,45 @@ describe('c1x adapter tests', () => {
       expect(adapter.callBids).to.exist.and.to.be.a('function');
     });
   });
-
   describe('creation of bid url', () => {
-    if (typeof (pbjs._bidsReceived) === 'undefined') {
-      pbjs._bidsReceived = [];
-    }
-    if (typeof (pbjs._bidsRequested) === 'undefined') {
-      pbjs._bidsRequested = [];
-    }
-    if (typeof (pbjs._adsReceived) === 'undefined') {
-      pbjs._adsReceived = [];
-    }
     it('should be called only once', () => {
-      adapter.callBids(bidderSettingParams);
+      adapter.callBids(getDefaultBidderSetting());
       sinon.assert.calledOnce(stubLoadScript);
     });
-    it('should fix parameter name', function () {
-      adapter.callBids(bidderSettingParams);
-      var bidUrl = stubLoadScript.getCall(0).args[0];
-      sinon.assert.calledWith(stubLoadScript, bidUrl);
-      var parsedBidUrl = urlParse(bidUrl);
-      var parsedBidUrlQueryString = querystringify.parse(parsedBidUrl.query);
-      expect(parsedBidUrl.hostname).to.equal('ht-integration.c1exchange.com');
-      expect(parsedBidUrl.pathname).to.equal('/ht');
-      expect(parsedBidUrlQueryString).to.have.property('site').and.to.equal('9999');
-      expect(parsedBidUrlQueryString).to.have.property('adunits').and.to.equal('1');
-      expect(parsedBidUrlQueryString).to.have.property('a1').and.to.equal('div-c1x-ht');
-      expect(parsedBidUrlQueryString).to.have.property('a1s').and.to.equal('[300x250]');
+    it('require parameters before call', () => {
+      let xhr;
+      let requests;
+      xhr = sinon.useFakeXMLHttpRequest();
+      requests = [];
+      xhr.onCreate = request => requests.push(request);
+      adapter.callBids(getDefaultBidderSetting());
+      expect(requests).to.be.empty;
+      xhr.restore();
+    });
+    it('should send with correct parameters', function () {
+      adapter.callBids(getDefaultBidderSetting());
+      let expectedUrl = stubLoadScript.getCall(0).args[0];
+      sinon.assert.calledWith(stubLoadScript, expectedUrl);
+    });
+    it('should hit endpoint with optional parameters', function () {
+      let bids = [{
+        siteId: '9999',
+        pixelId: 9999,
+        sizes: [[300, 250]],
+        placementCode: 'div-c1x-ht',
+        endpoint: 'http://test.c1exchange.com:2000/ht',
+        domain: 'http://c1exchange.com/',
+        floorPriceMap: {
+          '300x250': 4.00
+        },
+        dspid: 4288
+      }];
+      adapter.callBids(createBidderRequest(bids));
+      let expectedUrl = stubLoadScript.getCall(0).args[0];
+      sinon.assert.calledWith(stubLoadScript, expectedUrl);
     });
   });
   describe('creation of bid url without default parameter', function () {
-    if (typeof (pbjs._bidsReceived) === 'undefined') {
-      pbjs._bidsReceived = [];
-    }
-    if (typeof (pbjs._bidsRequested) === 'undefined') {
-      pbjs._bidsRequested = [];
-    }
-    if (typeof (pbjs._adsReceived) === 'undefined') {
-      pbjs._adsReceived = [];
-    }
     it('should fix without default parameter', function () {
       var params = {
         bidderCode: 'c1x',
@@ -91,57 +102,7 @@ describe('c1x adapter tests', () => {
       adapter.callBids(params);
     });
   });
-  describe('creation of bid url with optional parameters', function () {
-    if (typeof (pbjs._bidsReceived) === 'undefined') {
-      pbjs._bidsReceived = [];
-    }
-    if (typeof (pbjs._bidsRequested) === 'undefined') {
-      pbjs._bidsRequested = [];
-    }
-    if (typeof (pbjs._adsReceived) === 'undefined') {
-      pbjs._adsReceived = [];
-    }
-    it('should fix optional parameter name', function () {
-      var params = {
-        bidderCode: 'c1x',
-        bids: [{
-          siteId: '9999',
-          pixelId: 9999,
-          sizes: [[300, 250]],
-          adId: 'div-c1x-ht',
-          endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-          domain: 'http://c1exchange.com/',
-          floorPriceMap: {
-            '300x250': 4.00
-          },
-          dspid: 4288
-        }]
-      };
-      adapter.callBids(params);
-      var bidUrl = stubLoadScript.getCall(0).args[0];
-      sinon.assert.calledWith(stubLoadScript, bidUrl);
-      var parsedBidUrl = urlParse(bidUrl);
-      var parsedBidUrlQueryString = querystringify.parse(parsedBidUrl.query);
-      expect(parsedBidUrl.hostname).to.equal('ht-integration.c1exchange.com');
-      expect(parsedBidUrl.pathname).to.equal('/ht');
-      expect(parsedBidUrlQueryString).to.have.property('site').and.to.equal('9999');
-      expect(parsedBidUrlQueryString).to.have.property('adunits').and.to.equal('1');
-      expect(parsedBidUrlQueryString).to.have.property('a1').and.to.equal('div-c1x-ht');
-      expect(parsedBidUrlQueryString).to.have.property('a1s').and.to.equal('[300x250]');
-      expect(parsedBidUrlQueryString).to.have.property('a1p').and.to.equal('4');
-      expect(parsedBidUrlQueryString).to.have.property('dspid').and.to.equal('4288');
-    });
-  });
   describe('handling of the callback response', function () {
-    if (typeof (pbjs._bidsReceived) === 'undefined') {
-      pbjs._bidsReceived = [];
-    }
-    if (typeof (pbjs._bidsRequested) === 'undefined') {
-      pbjs._bidsRequested = [];
-    }
-    if (typeof (pbjs._adsReceived) === 'undefined') {
-      pbjs._adsReceived = [];
-    }
     var params = {
       bidderCode: 'c1x',
       bids: [{

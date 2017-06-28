@@ -17,10 +17,10 @@ var C1XAdapter = function C1XAdapter() {
   var ENDPOINT = 'http://ht-integration.c1exchange.com:9000/ht',
     PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/',
     PIXEL_FIRE_DELAY = 3000,
-    ERROR_MESS = {
-      noSite: 'C1X:ERROR no site id supplied',
-      noBid: 'C1X:INFO creating a NO bid for Adunit: ',
-      bidWin: 'C1X:INFO creating a bid for Adunit: '
+    ERROR_MSG = {
+      noSite: 'C1X: ERROR no site id supplied',
+      noBid: 'C1X: INFO creating a NO bid for Adunit: ',
+      bidWin: 'C1X: INFO creating a bid for Adunit: '
     };
 
   var pbjs = window.pbjs || {};
@@ -43,13 +43,13 @@ var C1XAdapter = function C1XAdapter() {
             bidObject.ad = data.ad;
             bidObject.width = data.width;
             bidObject.height = data.height;
-            console.log('c1x: INFO creating bid for adunit: ' + data.adId + ' size: ' + data.width + 'x' + data.height);
+            console.log(ERROR_MSG.bidWin + data.adId + ' size: ' + data.width + 'x' + data.height);
             bidmanager.addBidResponse(data.adId, bidObject);
           } else {
             // no bid.
             bidObject = bidfactory.createBid(2);
             bidObject.bidderCode = 'c1x';
-            console.log('c1x: INFO creating a NO bid for adunit: ' + data.adId);
+            console.log(ERROR_MSG.nobid + data.adId);
             bidmanager.addBidResponse(data.adId, bidObject);
           }
         }
@@ -62,6 +62,8 @@ var C1XAdapter = function C1XAdapter() {
   function getSettings(key) {
     if (pbjs && pbjs.bidderSettings) {
       var c1xSettings = pbjs.bidderSettings['c1x'];
+      console.log('bidder settings: ');
+      console.log(c1xSettings);
       if (c1xSettings) {
         return c1xSettings[key];
       }
@@ -85,6 +87,7 @@ var C1XAdapter = function C1XAdapter() {
       }, PIXEL_FIRE_DELAY);
     }
   }
+
   function _callBids(params) {
     var bids = params.bids;
     if (bids[0].pixelId || getSettings('pixelId')) {
@@ -94,7 +97,7 @@ var C1XAdapter = function C1XAdapter() {
 
     var siteId = bids[0].siteId ? bids[0].siteId : getSettings('siteId');
     if (!siteId) {
-      console.log(ERROR_MESS.noSite);
+      console.log(ERROR_MSG.noSite);
       return;
     }
 

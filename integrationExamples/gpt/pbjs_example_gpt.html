@@ -9,7 +9,7 @@
   c1x.logs = [];
 </script>
 <script>
-    var PREBID_TIMEOUT = 800;
+    var PREBID_TIMEOUT = 2000;
     var MAX_RETRIES = 20;
 
     var googletag = googletag || {};
@@ -17,38 +17,33 @@
     googletag.cmd.push(function () {
         googletag.pubads().disableInitialLoad();
     });
-    var $$PREBID_GLOBAL$$ = $$PREBID_GLOBAL$$ || {};
-    $$PREBID_GLOBAL$$.cmd = $$PREBID_GLOBAL$$.cmd || [];
-    $$PREBID_GLOBAL$$.retries = 0;
 
-    /* $$PREBID_GLOBAL$$.initAdserver will be called either when all bids are back, or
+    var pbjs = pbjs || {};
+    pbjs.cmd = pbjs.cmd || [];
+    pbjs.retries = 0;
+
+    /* pbjs.initAdserver will be called either when all bids are back, or
      when the timeout is reached.
      */
     function initAdserver() {
-        if ($$PREBID_GLOBAL$$.initAdserverSet) return;
-        if(!googletag.pubadsReady && $$PREBID_GLOBAL$$.retries <= MAX_RETRIES) {
-          setTimeout(initAdserver, 50); //poll ms can be adjusted as desired.
-          $$PREBID_GLOBAL$$.retries++;
-          return;
-        }
-        googletag.cmd.push(function () {
-            $$PREBID_GLOBAL$$.cmd.push(function () {
-                $$PREBID_GLOBAL$$.setTargetingForGPTAsync();
-            });
-            googletag.pubads().refresh();
+      if (pbjs.initAdserverSet) return;
+      googletag.cmd.push(function () {
+        pbjs.cmd.push(function () {
+            pbjs.setTargetingForGPTAsync();
         });
-        $$PREBID_GLOBAL$$.initAdserverSet = true;
+        googletag.pubads().refresh();
+      });
+      pbjs.initAdserverSet = true;
     }
 
     // Load GPT when timeout is reached.
     setTimeout(initAdserver, PREBID_TIMEOUT);
 
-    // Load the Prebid Javascript Library Async. We recommend loading it immediately after
-    // the initAdserver() and setTimeout functions.
+    // Load the Prebid Javascript Library Async. We recommend loading it immediately after the initAdserver() and setTimeout functions.
     (function() {
         var d = document, pbs = d.createElement('script'), pro = d.location.protocol;
         pbs.type = 'text/javascript';
-        pbs.src = '/build/dev/prebid.js';
+        pbs.src = '../../build/dev/prebid.js';
         var target = document.getElementsByTagName('head')[0];
         target.insertBefore(pbs, target.firstChild);
     })();
@@ -65,149 +60,95 @@
         node.parentNode.insertBefore(gads, node);
     })();
 
-    $$PREBID_GLOBAL$$.cmd.push(function () {
+    pbjs.cmd.push(function () {
 
-        /* 1. Register bidder tag Ids
+      /* 1. Register bidder tag Ids
 
-         Registers the bidder tags for your ad units. Once the prebid.js
-         library loads, it reads the $$PREBID_GLOBAL$$.adUnits object and sends out
-         bid requests. Find the complete reference on bidders at
-         http://prebid.org/bidders.html.
+       Registers the bidder tags for your ad units. Once the prebid.js
+       library loads, it reads the pbjs.adUnits object and sends out
+       bid requests. 
 
-         code:  Your GPT slot’s ad unit path. If they don’t match, prebid.js
-         would not be able to set targeting correctly
-         sizes: All sizes your ad unit accepts. They should match with GPT.
+       code:  Your GPT slot’s ad unit path. If they don’t match, prebid.js
+       would not be able to set targeting correctly
+       sizes: All sizes your ad unit accepts. They should match with GPT.
 
-         */
-        var adUnits = [
-            {
-                code: 'div-gpt-ad-1498193081995-0',
-                sizes: [[300, 250], [300, 600]],
-                bids: [
-                    // 1 ad unit can be targeted by multiple bids.
-                    {
-                        bidder: 'c1x'
+       */
+      var adUnits = [
+          {
+              code: 'div-gpt-ad-1498193081995-0',
+              sizes: [[300, 250], [300, 600]],
+              bids: [
+                  // 1 ad unit can be targeted by multiple bids.
+                  {
+                      bidder: 'c1x'
+                  }
+              ]
+          }
+      ];
+
+      //add the adUnits
+      pbjs.addAdUnits(adUnits);
+
+      //register a callback handler
+      pbjs.onEvent('bidResponse', function (bidResponse) {
+          console.log('A bid response has arrived:');
+      });
+
+     /* Configure Ad Server Targeting
+       The below section defines what key value targeting will be sent to GPT.
+       */
+      pbjs.bidderSettings = {
+        standard: {
+            adserverTargeting: [
+                {
+                    key: "hb_bidder",
+                    val: function (bidResponse) {
+                        return bidResponse.bidderCode;
                     }
-                ]
-            }
-        ];
-
-        //add the adUnits
-        $$PREBID_GLOBAL$$.addAdUnits(adUnits);
-
-        //register a callback handler
-        $$PREBID_GLOBAL$$.onEvent('bidResponse', function (bidResponse) {
-            console.log('A bid response has arrived:', bidResponse);
-        });
-
-        /* Request bids for the added ad units. If adUnits or adUnitCodes are
-         not specified, the function will request bids for all added ad units.
-         */
-        $$PREBID_GLOBAL$$.requestBids({
-
-            /* The bidsBack function will be called when either timeout is
-             reached, or when all bids come back, whichever happens sooner.
-             */
-            bidsBackHandler: function (bidResponses) {
-                c1x.logs.push([new Date().getTime(), 'Bids back handler called.']);
-                console.log('all the bid responses are back');
-                initAdserver();
-            }
-
-            /* You can specify specific `adUnitCodes` to only request bids
-             for certain ad units.
-             adUnitCodes: ['code1', 'code2']
-             */
-
-            /* You can also make one off bid requests for the given `adUnits`.
-             adUnits: [adUnit2, adUnit1]
-             */
-
-            /* The bidsBackHandler will be executed either when all bids are
-             back, or when the timeout is reached.
-             timeout: 1000
-             */
-        });
-
-        /* 2. Configure Ad Server Targeting
-
-         The below section defines what key value targeting will be sent to GPT.
-         For each bidder’s bid, Prebid.js will set the below 4 keys (hb_bidder,
-         hb_adid, hb_pb, hb_size) with their corresponding values.
-
-         Bidders all have different recommended ad server line item targeting and
-         creative setup. To remove the headache for you, Prebid.js has a default
-         recommended query string targeting setting for all bidders.
-
-         If you’d like to customize the key value pairs, you can overwrite the settings
-         as the below example shows. Let your ad ops team know about the change, so they
-         can update the line item targeting accordingly.
-
-         */
-
-        $$PREBID_GLOBAL$$.bidderSettings = {
-            standard: {
-                adserverTargeting: [
-                    {
-                        key: "hb_bidder",
-                        val: function (bidResponse) {
-                            return bidResponse.bidderCode;
-                        }
-                    }, {
-                        key: "hb_adid",
-                        val: function (bidResponse) {
-                            return bidResponse.adId;
-                        }
-                    }, {
-                        key: "hb_pb",
-                        val: function (bidResponse) {
-                            return bidResponse.pbMg;
-                        }
-                    },
-                    {
-                        key: 'hb_size',
-                        val: function (bidResponse) {
-                            return bidResponse.size;
+                }, {
+                    key: "hb_adid",
+                    val: function (bidResponse) {
+                        return bidResponse.adId;
                     }
-        }
-                ]
-            },
-            c1x: {
-                pixelId: 99999,
-                siteId: 999,
-                endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-            },
-            appnexus: {
-                bidCpmAdjustment: function (bidCpm) {
-                    return bidCpm * .9;
+                }, {
+                    key: "hb_pb",
+                    val: function (bidResponse) {
+                        return bidResponse.pbMg;
+                    }
                 },
-                alwaysUseBid: true, // <-- new field - always send these custom keys for the specified bidder
-                adserverTargeting: [
-                    {
-                        key: "custom_bidder",
-                        val: function (bidResponse) {
-                            return bidResponse.bidderCode;
-                        }
-                    }, {
-                        key: "custom_adid",
-                        val: function (bidResponse) {
-                            return bidResponse.adId;
-                        }
-                    }, {
-                        key: "custom_pb",
-                        val: function (bidResponse) {
-                            return bidResponse.pbMg;
-                        }
-                    }, {
-                        key: "custom_size",
-                        val: function (bidResponse) {
-                            return bidResponse.getSize();
-
-                        }
+                {
+                    key: 'hb_size',
+                    val: function (bidResponse) {
+                        return bidResponse.size;
                     }
-                ]
-            }
-        };
+                }
+            ]
+        },
+        c1x: {
+            pixelId: 99999,
+            siteId: 999,
+            endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
+        }
+      };
+
+
+
+      /* Request bids for the added ad units. If adUnits or adUnitCodes are
+       not specified, the function will request bids for all added ad units.
+       */
+      pbjs.requestBids({
+
+          /* The bidsBack function will be called when either timeout is
+           reached, or when all bids come back, whichever happens sooner.
+           */
+          bidsBackHandler: function (bidResponses) {
+              // c1x.logs.push([new Date().getTime(), 'Bids back handler called.']);
+              console.log('all the bid responses are back');
+              console.log(bidResponses);
+              initAdserver();
+          }
+      });
+ 
     });
 
   googletag.cmd.push(function() {
@@ -221,15 +162,14 @@
 </head>
 <body>
 
-<h2>Prebid.js Test</h2>
+  <h2>Prebid.js Test</h2>
 
-
-<!-- /188708772/cathy-test-unit -->
-<div id='div-gpt-ad-1498193081995-0'>
-<script>
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1498193081995-0'); });
-</script>
-</div>
+  <!-- /188708772/cathy-test-unit -->
+  <div id='div-gpt-ad-1498193081995-0'>
+    <script type='text/javascript'>
+    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1498193081995-0'); });
+    </script>
+  </div>
 
 </body>
 
