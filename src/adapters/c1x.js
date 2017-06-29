@@ -62,18 +62,15 @@ var C1XAdapter = function C1XAdapter() {
   var pbjs = window.pbjs || {};
 
   function getSettings(key) {
-    if (pbjs && pbjs.bidderSettings) {
+    if (pbjs && pbjs.bidderSettings['c1x']) {
       var c1xSettings = pbjs.bidderSettings['c1x'];
-      if (c1xSettings) {
-        return c1xSettings[key];
-      }
+      return c1xSettings[key];
     } else {
       return null;
     }
   }
   // inject the audience pixel only if pbjs.bidderSettings['c1x'].pixelId is set.
   function injectAudiencePixel(pixel) {
-    //  var pixelId = getSettings('pixelId');
     var pixelId = pixel;
     if (pixelId) {
       window.setTimeout(function() {

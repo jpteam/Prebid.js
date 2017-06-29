@@ -84,8 +84,7 @@ describe('c1x adapter tests: ', () => {
     });
     it('should hit endpoint with optional param', () => {
       let bids = [{
-        siteId: '9999',
-        pixelId: 9999,
+        siteId: 9999,
         sizes: [[300, 250]],
         placementCode: 'div-c1x-ht',
         endpoint: 'http://test.c1exchange.com:2000/ht',
@@ -99,11 +98,32 @@ describe('c1x adapter tests: ', () => {
       let expectedUrl = stubLoadScript.getCall(0).args[0];
       sinon.assert.calledWith(stubLoadScript, expectedUrl);
     });
-    it('should throw erroe msg if no site id provided', () => {
+    it('should hit default bidder endpoint', () => {
+      let bid = getDefaultBidderSetting();
+      bid.bids[0].endpoint = null;
+      adapter.callBids(bid);
+      let expectedUrl = stubLoadScript.getCall(0).args[0];
+      sinon.assert.calledWith(stubLoadScript, expectedUrl);
+    });
+    it('should throw error msg if no site id provided', () => {
       let bid = getDefaultBidderSetting();
       bid.bids[0].siteId = '';
       adapter.callBids(bid);
       sinon.assert.notCalled(stubLoadScript);
+    });
+    it('should get pixelId from bidder settings if no pixelId in bid request', () => {
+      let bid = getDefaultBidderSetting();
+      let responsePId;
+      pbjs.bidderSettings['c1x'] = { pixelId: 4567 };
+      bid.bids[0].pixelId = '';
+      adapter.callBids(bid);
+    });
+    it('should not inject audience pixel if no pixelId provided', () => {
+      let bid = getDefaultBidderSetting();
+      let responsePId;
+      pbjs.bidderSettings['c1x'] = null;
+      bid.bids[0].pixelId = '';
+      adapter.callBids(bid);
     });
   });
   describe('bid response', () => {
