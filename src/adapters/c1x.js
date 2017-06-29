@@ -32,6 +32,8 @@ var C1XAdapter = function C1XAdapter() {
       if (typeof c1xResponse === CONSTANTS.objectType_string) {
         response = JSON.parse(c1xResponse);
       }
+      console.log('Response Length: ');
+      console.log(response.length);
       if (response) {
         for (var i = 0; i < response.length; i++) {
           var data = response[i],
@@ -62,8 +64,6 @@ var C1XAdapter = function C1XAdapter() {
   function getSettings(key) {
     if (pbjs && pbjs.bidderSettings) {
       var c1xSettings = pbjs.bidderSettings['c1x'];
-      console.log('bidder settings: ');
-      console.log(c1xSettings);
       if (c1xSettings) {
         return c1xSettings[key];
       }
@@ -90,6 +90,7 @@ var C1XAdapter = function C1XAdapter() {
 
   function _callBids(params) {
     var bids = params.bids;
+
     if (bids[0].pixelId || getSettings('pixelId')) {
       var pixelId = bids[0].pixelId ? bids[0].pixelId : getSettings('pixelId');
       injectAudiencePixel(pixelId);
