@@ -144,32 +144,22 @@ describe('c1x adapter tests: ', () => {
       expect(pbjs._c1xResponse).to.exist.and.to.be.a('function');
     });
     it('should be added to bidmanager if returned from bidder', () => {
-      server.respondWith(JSON.stringify(getDefaultBidResponse()));
-      adapter.callBids(getDefaultBidderSetting());
-      server.respond();
+      let responses = [];
+      responses.push(getDefaultBidResponse());
+      pbjs._c1xResponse(responses);
       sinon.assert.calledOnce(stubAddBidResponse);
     });
     it('bidmanager.addBidResponse should be called twice with correct arguments', () => {
-      adapter.callBids(getDefaultBidderSetting());
-      var adUnits = new Array();
-      var unit = new Object();
-      unit.bids = [{
-        bidder: 'c1x'
-      }];
-      unit.sizes = [[728, 90]];
-      adUnits.push(unit);
-      // pbjs._bidsRequested.push(params);
-      // pbjs.adUnits = adUnits;
-      pbjs._c1xResponse(JSON.stringify(getDefaultBidResponse()));
+      let responses = [];
+      responses.push(getDefaultBidResponse());
+      pbjs._c1xResponse(responses);
       var responseAdId = stubAddBidResponse.getCall(0).args[0];
       var bidObject = stubAddBidResponse.getCall(0).args[1];
-      expect(responseAdId).to.equal('div-gpt-ad-44697-3');
+      expect(responseAdId).to.equal('div-c1x-ht');
       expect(bidObject.cpm).to.equal(3.31);
       expect(bidObject.width).to.equal(300);
       expect(bidObject.height).to.equal(250);
       expect(bidObject.ad).to.equal('<div><a target=\"_new\" href=\"http://c1exchange.com\"><img src=\"https://placeholdit.imgix.net/~text?txtsize=38&txt=C1X%20Ad%20300x250&w=300&h=250&txttrack=0\"></a></div>');
-      expect(bidObject.getStatusCode()).to.equal(1);
-      expect(bidObject.statusMessage).to.equal('Bid available');
       expect(bidObject.bidderCode).to.equal('c1x');
       sinon.assert.calledOnce(stubAddBidResponse);
     });
