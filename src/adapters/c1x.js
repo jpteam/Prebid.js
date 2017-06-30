@@ -17,11 +17,13 @@ var C1XAdapter = function C1XAdapter() {
   var ENDPOINT = 'http://ht-integration.c1exchange.com:9000/ht',
     PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/',
     PIXEL_FIRE_DELAY = 3000,
-    ERROR_MSG = {
+    LOG_MSG = {
+      invalidBid: 'C1X: ERROR bidder returns an invalid bid',
       noSite: 'C1X: ERROR no site id supplied',
       noBid: 'C1X: INFO creating a NO bid for Adunit: ',
       bidWin: 'C1X: INFO creating a bid for Adunit: '
-    };
+    },
+    BIDDER_CODE = 'c1x';
 
   var pbjs = window.pbjs || {};
 
@@ -32,34 +34,39 @@ var C1XAdapter = function C1XAdapter() {
       if (typeof c1xResponse === CONSTANTS.objectType_string) {
         response = JSON.parse(c1xResponse);
       }
-      console.log('Response Length: ');
-      console.log(response.length);
-      if (response) {
-        for (var i = 0; i < response.length; i++) {
-          var data = response[i],
-            bidObject = null;
-          if (data.bid) {
-            bidObject = bidfactory.createBid(1);
-            bidObject.bidderCode = 'c1x';
-            bidObject.cpm = data.cpm;
-            bidObject.ad = data.ad;
-            bidObject.width = data.width;
-            bidObject.height = data.height;
-            console.log(ERROR_MSG.bidWin + data.adId + ' size: ' + data.width + 'x' + data.height);
-            bidmanager.addBidResponse(data.adId, bidObject);
-          } else {
-            // no bid.
-            bidObject = bidfactory.createBid(2);
-            bidObject.bidderCode = 'c1x';
-            console.log(ERROR_MSG.nobid + data.adId);
-            bidmanager.addBidResponse(data.adId, bidObject);
-          }
+      for (var i = 0; i < response.length; i++) {
+        var data = response[i],
+          bidObject = null;
+        if (data.bid) {
+          bidObject = bidfactory.createBid(1);
+          bidObject.bidderCode = BIDDER_CODE;
+          bidObject.cpm = data.cpm;
+          bidObject.ad = data.ad;
+          bidObject.width = data.width;
+          bidObject.height = data.height;
+          utils.logInfo(LOG_MSG.bidWin + data.adId + ' size: ' + data.width + 'x' + data.height);
+          bidmanager.addBidResponse(data.adId, bidObject);
+        } else {
+          // no bid
+          utils.logInfo(LOG_MSG.nobid + data.adId);
+          bidmanager.addBidResponse(data.adId, noBidResponse());
         }
+      }
+    } else {
+      // invalid bid
+      var slots = pbjs.adUnits;
+      utils.logWarn(LOG_MSG.invalidBid);
+      for (var i = 0; i < slots.length; i++) {
+        bidmanager.addBidResponse(slots[i].code, noBidResponse());
       }
     }
   };
 
-  var pbjs = window.pbjs || {};
+  function noBidResponse() {
+    var bidObject = bidfactory.createBid(2);
+    bidObject.bidderCode = BIDDER_CODE;
+    return bidObject;
+  }
 
   function getSettings(key) {
     if (pbjs && pbjs.bidderSettings['c1x']) {
@@ -72,17 +79,15 @@ var C1XAdapter = function C1XAdapter() {
   // inject the audience pixel only if pbjs.bidderSettings['c1x'].pixelId is set.
   function injectAudiencePixel(pixel) {
     var pixelId = pixel;
-    if (pixelId) {
-      window.setTimeout(function() {
-        var pixel = document.createElement('img');
-        pixel.width = 1;
-        pixel.height = 1;
-        pixel.style = 'display:none;';
-        var useSSL = document.location.protocol;
-        pixel.src = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
-        document.body.insertBefore(pixel, null);
-      }, PIXEL_FIRE_DELAY);
-    }
+    window.setTimeout(function() {
+      var pixel = document.createElement('img');
+      pixel.width = 1;
+      pixel.height = 1;
+      pixel.style = 'display:none;';
+      var useSSL = document.location.protocol;
+      pixel.src = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
+      document.body.insertBefore(pixel, null);
+    }, PIXEL_FIRE_DELAY);
   }
 
   function _callBids(params) {
@@ -95,7 +100,7 @@ var C1XAdapter = function C1XAdapter() {
 
     var siteId = bids[0].siteId ? bids[0].siteId : getSettings('siteId');
     if (!siteId) {
-      console.log(ERROR_MSG.noSite);
+      utils.logWarn(LOG_MSG.noSite);
       return;
     }
 

@@ -3,8 +3,6 @@ import C1XAdapter from 'src/adapters/c1x';
 import bidmanager from 'src/bidmanager';
 import adLoader from 'src/adloader';
 import urlParse from 'url-parse';
-// FYI: querystringify will perform encoding/decoding
-import querystringify from 'querystringify';
 
 let getDefaultBidderSetting = () => {
   return {
@@ -32,10 +30,7 @@ let getDefaultBidResponse = () => {
 };
 
 describe('c1x adapter tests: ', () => {
-  window.pbjs = window.pbjs || {};
-  if (typeof (pbjs) === 'undefined') {
-    var pbjs = window.pbjs;
-  }
+  let pbjs = window.pbjs || {};
   let stubLoadScript;
   let adapter;
 
@@ -66,6 +61,7 @@ describe('c1x adapter tests: ', () => {
     it('should be called only once', () => {
       adapter.callBids(getDefaultBidderSetting());
       sinon.assert.calledOnce(stubLoadScript);
+      expect(window._c1xResponse).to.exist.and.to.be.a('function');
     });
     it('require parameters before call', () => {
       let xhr;
@@ -143,16 +139,24 @@ describe('c1x adapter tests: ', () => {
     it('callback function should exist', function () {
       expect(pbjs._c1xResponse).to.exist.and.to.be.a('function');
     });
-    it('should be added to bidmanager if returned from bidder', () => {
+    it('should get JSONP from c1x bidder', function () {
+      let responses = [];
+      let stubC1XResponseFunc = sinon.stub(pbjs, '_c1xResponse');
+      responses.push(getDefaultBidResponse());
+      window._c1xResponse(JSON.stringify(responses));
+      sinon.assert.calledOnce(stubC1XResponseFunc);
+      stubC1XResponseFunc.restore();
+    });
+    it('should be added to bidmanager after returned from bidder', () => {
       let responses = [];
       responses.push(getDefaultBidResponse());
       pbjs._c1xResponse(responses);
       sinon.assert.calledOnce(stubAddBidResponse);
     });
-    it('bidmanager.addBidResponse should be called twice with correct arguments', () => {
+    it('should send correct arguments to bidmanager.addBidResponse', () => {
       let responses = [];
       responses.push(getDefaultBidResponse());
-      pbjs._c1xResponse(responses);
+      pbjs._c1xResponse(JSON.stringify(responses));
       var responseAdId = stubAddBidResponse.getCall(0).args[0];
       var bidObject = stubAddBidResponse.getCall(0).args[1];
       expect(responseAdId).to.equal('div-c1x-ht');
@@ -163,38 +167,22 @@ describe('c1x adapter tests: ', () => {
       expect(bidObject.bidderCode).to.equal('c1x');
       sinon.assert.calledOnce(stubAddBidResponse);
     });
-  });
-  describe('handling of response with no bid', () => {
-    var params = {
-      bidderCode: 'c1x',
-      bids: [{
-        siteId: '9999',
-        pixelId: 9999,
-        sizes: [[300, 200]],
-        adId: 'div-gpt-ad-1494499685685-0',
-        endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
-        domain: 'http://c1exchange.com/'
-      }]
-    };
-    var response = JSON.stringify([{'bid': false, 'adId': 'div-gpt-ad-1494499685685-0'}]);
-    it('bidmanager.addBidResponse should be called with correct arguments and responding with no bid', () => {
-      var stubAddBidResponse = sinon.stub(bidmanager, 'addBidResponse');
-      adapter.callBids(params);
-      var adUnits = new Array();
-      var unit = new Object();
-      unit.bids = [params];
-      unit.sizes = [[728, 90]];
-      adUnits.push(unit);
-      if (typeof (pbjs._bidsRequested) === 'undefined') {
-        pbjs._bidsRequested = [params];
-      } else {
-        pbjs._bidsRequested.push(params);
-      }
-      pbjs.adUnits = adUnits;
-      pbjs._c1xResponse(response);
-      var code1 = stubAddBidResponse.getCall(0).args[0];
-      var bidObject1 = stubAddBidResponse.getCall(0).args[1];
-      expect(bidObject1.statusMessage).to.equal('Bid returned empty or error response');
+    it('should response to bidmanager when it is a no bid', () => {
+      let responses = [];
+      responses.push({'bid': false, 'adId': 'div-gpt-ad-1494499685685-0'});
+      pbjs._c1xResponse(responses);
+      let responseAdId = stubAddBidResponse.getCall(0).args[0];
+      let bidObject = stubAddBidResponse.getCall(0).args[1];
+      expect(responseAdId).to.equal('div-gpt-ad-1494499685685-0');
+      expect(bidObject.statusMessage).to.equal('Bid returned empty or error response');
+      sinon.assert.calledOnce(stubAddBidResponse);
+    });
+    it('should show error when bidder sends invalid bid responses', () => {
+      let responses;
+      pbjs._c1xResponse(responses);
+      let bidObject = stubAddBidResponse.getCall(0).args[1];
+      expect(bidObject.statusMessage).to.equal('Bid returned empty or error response');
+      sinon.assert.calledOnce(stubAddBidResponse);
     });
   });
 });
