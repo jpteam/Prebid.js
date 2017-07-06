@@ -111,7 +111,7 @@ var C1XAdapter = function C1XAdapter() {
       var sizes = bids[i].sizes,
         sizeStr = sizes.reduce(function(prev, current) { return prev + (prev === '' ? '' : ',') + current.join('x') }, '');
 // send floor price if the setting is available.
-      var floorPriceMap = bids[i].floorPriceMap;
+      var floorPriceMap = getSettings('floorPriceMap');
       if (floorPriceMap) {
         var adUnitSize = sizes[0].join('x');
         if (adUnitSize in floorPriceMap) {
@@ -120,13 +120,13 @@ var C1XAdapter = function C1XAdapter() {
       }
       options.push('a' + (i + 1) + 's=[' + sizeStr + ']');
     }
-    options.push('rnd=' + new Date().getTime());  // cache busting
+    options.push('rid=' + new Date().getTime());  // cache busting
     var c1xEndpoint = ENDPOINT;
-    if (bids[0].endpoint) {
-      c1xEndpoint = bids[0].endpoint;
+    if (getSettings('endpoint')) {
+      c1xEndpoint = getSettings('endpoint');
     }
-    if (bids[0].dspid) {
-      options.push('dspid=' + bids[0].dspid);
+    if (getSettings('dspid')) {
+      options.push('dspid=' + getSettings('dspid'));
     }
     var url = c1xEndpoint + '?' + options.join('&');
     window._c1xResponse = function (c1xResponse) {
