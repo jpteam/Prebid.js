@@ -1,8 +1,8 @@
-var CONSTANTS = require('../constants.json');
-var utils = require('../utils.js');
-var bidfactory = require('../bidfactory.js');
-var bidmanager = require('../bidmanager.js');
-var adloader = require('../adloader');
+var CONSTANTS = require('src/constants.json');
+var utils = require('src/utils.js');
+var bidfactory = require('src/bidfactory.js');
+var bidmanager = require('src/bidmanager.js');
+var adloader = require('src/adloader');
 /**
  * Adapter for requesting bids from C1X header tag server.
  * v2.0 (c) C1X Inc., 2017

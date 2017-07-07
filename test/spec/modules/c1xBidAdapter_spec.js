@@ -1,8 +1,7 @@
 import {expect} from 'chai';
-import C1XAdapter from 'src/adapters/c1x';
+import C1XAdapter from 'modules/c1xBidAdapter';
 import bidmanager from 'src/bidmanager';
 import adLoader from 'src/adloader';
-import urlParse from 'url-parse';
 
 let getDefaultBidderSetting = () => {
   return {
