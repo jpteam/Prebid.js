@@ -3,6 +3,8 @@ var utils = require('src/utils.js');
 var bidfactory = require('src/bidfactory.js');
 var bidmanager = require('src/bidmanager.js');
 var adloader = require('src/adloader');
+var adaptermanager = require('src/adaptermanager.js');
+
 /**
  * Adapter for requesting bids from C1X header tag server.
  * v2.0 (c) C1X Inc., 2017
@@ -12,7 +14,7 @@ var adloader = require('src/adloader');
  * @returns {{callBids: _callBids}}
  * @constructor
  */
-var C1XAdapter = function C1XAdapter() {
+function C1XAdapter() {
   // default endpoint. Can be overridden by adding an "endpoint" property to the first param in bidder config.
   var ENDPOINT = 'http://ht-integration.c1exchange.com:9000/ht',
     PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/',
@@ -140,4 +142,6 @@ var C1XAdapter = function C1XAdapter() {
     callBids: _callBids
   };
 };
+
+adaptermanager.registerBidAdapter(new C1XAdapter, 'c1x');
 module.exports = C1XAdapter;
