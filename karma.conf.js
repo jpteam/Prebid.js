@@ -43,6 +43,7 @@ module.exports = function (config) {
     files: [
       'test/helpers/prebidGlobal.js',
       'test/**/*_spec.js',
+      'test/**/c1xBidAdapter_spec.js', //modify the pbjs_example page to test the build with the c1x adapter
       'test/helpers/karma-init.js'
     ],
 

@@ -3,12 +3,6 @@
 <head>
 <title>Prebid.js integration example</title>
 <script>
-  //for logging
-  var c1x = {};
-  c1x.startTime = new Date().getTime();
-  c1x.logs = [];
-</script>
-<script>
     var PREBID_TIMEOUT = 2000;
     var MAX_RETRIES = 20;
 
@@ -99,39 +93,41 @@
        */
       pbjs.bidderSettings = {
         standard: {
-            adserverTargeting: [
-                {
-                    key: "hb_bidder",
-                    val: function (bidResponse) {
-                        return bidResponse.bidderCode;
-                    }
-                }, {
-                    key: "hb_adid",
-                    val: function (bidResponse) {
-                        return bidResponse.adId;
-                    }
-                }, {
-                    key: "hb_pb",
-                    val: function (bidResponse) {
-                        return bidResponse.pbMg;
-                    }
-                },
-                {
-                    key: 'hb_size',
-                    val: function (bidResponse) {
-                        return bidResponse.size;
-                    }
+          adserverTargeting: [
+            {
+                key: "hb_bidder",
+                val: function (bidResponse) {
+                    return bidResponse.bidderCode;
                 }
-            ]
+            }, {
+                key: "hb_adid",
+                val: function (bidResponse) {
+                    return bidResponse.adId;
+                }
+            }, {
+                key: "hb_pb",
+                val: function (bidResponse) {
+                    return bidResponse.pbMg;
+                }
+            }, {
+                key: 'hb_size',
+                val: function (bidResponse) {
+                    return bidResponse.size;
+                }
+            }
+          ]
         },
         c1x: {
-            pixelId: 99999,
+            pixelId: 99999, //optional
             siteId: 999,
-            endpoint: 'http://ht-integration.c1exchange.com:9000/ht',
+            endpoint: 'http://ht-integration.c1exchange.com:9000/ht', //optional
+            floorPriceMap: {
+              '300x250': 4.00,
+              '300x600': 3.00
+            }, //optional
+            dspid: 0704 //optional
         }
       };
-
-
 
       /* Request bids for the added ad units. If adUnits or adUnitCodes are
        not specified, the function will request bids for all added ad units.
