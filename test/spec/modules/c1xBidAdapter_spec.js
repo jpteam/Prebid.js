@@ -2,7 +2,6 @@ import {expect} from 'chai';
 import C1XAdapter from 'modules/c1xBidAdapter';
 import bidmanager from 'src/bidmanager';
 import adLoader from 'src/adloader';
-import urlParse from 'url-parse';
 
 let getDefaultBidderSetting = () => {
   return {
@@ -10,9 +9,8 @@ let getDefaultBidderSetting = () => {
     bids: [{
       siteId: 9999,
       pixelId: 9999,
-      sizes: [[300, 250]],
+      sizes: [[300, 250], [300, 600]],
       placementCode: 'div-c1x-ht',
-      endpoint: 'http://test.c1exchange.com:2000/ht',
       domain: 'http://c1exchange.com/'
     }]
   };
@@ -93,6 +91,9 @@ describe('c1x adapter tests: ', () => {
       adapter.callBids(createBidderRequest(bids));
       let expectedUrl = stubLoadScript.getCall(0).args[0];
       sinon.assert.calledWith(stubLoadScript, expectedUrl);
+      bids[0].sizes = [[728, 90]];
+      adapter.callBids(createBidderRequest(bids));
+      sinon.assert.calledTwice(stubLoadScript);
     });
     it('should hit default bidder endpoint', () => {
       let bid = getDefaultBidderSetting();

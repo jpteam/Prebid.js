@@ -27,7 +27,7 @@ function C1XAdapter() {
     },
     BIDDER_CODE = 'c1x';
 
-  var pbjs = window.pbjs || {};
+  var pbjs = window.pbjs;
 
   pbjs._c1xResponse = function(c1xResponse) {
     if (c1xResponse) {
@@ -113,7 +113,7 @@ function C1XAdapter() {
       var sizes = bids[i].sizes,
         sizeStr = sizes.reduce(function(prev, current) { return prev + (prev === '' ? '' : ',') + current.join('x') }, '');
 // send floor price if the setting is available.
-      var floorPriceMap = getSettings('floorPriceMap');
+      var floorPriceMap = bids[0].floorPriceMap ? bids[0].floorPriceMap : getSettings('floorPriceMap');
       if (floorPriceMap) {
         var adUnitSize = sizes[0].join('x');
         if (adUnitSize in floorPriceMap) {
@@ -124,11 +124,12 @@ function C1XAdapter() {
     }
     options.push('rid=' + new Date().getTime());  // cache busting
     var c1xEndpoint = ENDPOINT;
-    if (getSettings('endpoint')) {
-      c1xEndpoint = getSettings('endpoint');
+    if (bids[0].endpoint || getSettings('endpoint')) {
+      c1xEndpoint = bids[0].endpoint ? bids[0].endpoint : getSettings('endpoint');
     }
-    if (getSettings('dspid')) {
-      options.push('dspid=' + getSettings('dspid'));
+    var dspid = bids[0].dspid ? bids[0].dspid : getSettings('dspid');
+    if (dspid) {
+      options.push('dspid=' + dspid);
     }
     var url = c1xEndpoint + '?' + options.join('&');
     window._c1xResponse = function (c1xResponse) {
