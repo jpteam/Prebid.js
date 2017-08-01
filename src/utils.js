@@ -1,8 +1,4 @@
-var CONSTANTS = require('./constants.json');
-
-var objectType_object = 'object';
-var objectType_string = 'string';
-var objectType_number = 'number';
+var CONSTANTS = require('./constants');
 
 var _loggingChecked = false;
 
@@ -116,7 +112,7 @@ export function parseSizesInput(sizeObj) {
   var parsedSizes = [];
 
   // if a string for now we can assume it is a single size, like "300x250"
-  if (typeof sizeObj === objectType_string) {
+  if (typeof sizeObj === 'string') {
     // multiple sizes will be comma-separated
     var sizes = sizeObj.split(',');
 
@@ -130,13 +126,13 @@ export function parseSizesInput(sizeObj) {
         }
       }
     }
-  } else if (typeof sizeObj === objectType_object) {
+  } else if (typeof sizeObj === 'object') {
     var sizeArrayLength = sizeObj.length;
 
     // don't process empty array
     if (sizeArrayLength > 0) {
       // if we are a 2 item array of 2 numbers, we must be a SingleSize array
-      if (sizeArrayLength === 2 && typeof sizeObj[0] === objectType_number && typeof sizeObj[1] === objectType_number) {
+      if (sizeArrayLength === 2 && typeof sizeObj[0] === 'number' && typeof sizeObj[1] === 'number') {
         parsedSizes.push(parseGPTSingleSizeArray(sizeObj));
       } else {
         // otherwise, we must be a MultiSize array
@@ -455,7 +451,7 @@ exports.insertElement = function(elm, doc, target) {
 
 exports.insertPixel = function (url) {
   const img = new Image();
-  img.id = this.getUniqueIdentifierStr();
+  img.id = _getUniqueIdentifierStr();
   img.src = url;
   img.height = 0;
   img.width = 0;
@@ -466,7 +462,7 @@ exports.insertPixel = function (url) {
     } catch (e) {
     }
   };
-  this.insertElement(img);
+  exports.insertElement(img);
 };
 
 /**
@@ -479,7 +475,7 @@ exports.insertCookieSyncIframe = function(url, encodeUri) {
   let div = document.createElement('div');
   div.innerHTML = iframeHtml;
   let iframe = div.firstChild;
-  this.insertElement(iframe);
+  exports.insertElement(iframe);
 };
 
 /**
@@ -622,7 +618,7 @@ export function shuffle(array) {
 }
 
 export function adUnitsFilter(filter, bid) {
-  return filter.includes(bid && bid.placementCode || bid && bid.adUnitCode);
+  return filter.includes((bid && bid.placementCode) || (bid && bid.adUnitCode));
 }
 
 /**
