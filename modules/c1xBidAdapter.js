@@ -75,7 +75,7 @@ function C1XAdapter() {
     return bidObject;
   }
 
-  // inject the audience pixel only if pbjs.bidderSettings['c1x'].pixelId is set.
+  // inject the audience pixel only if bids.params.pixelId is set.
   function injectAudiencePixel(pixel) {
     var pixelId = pixel;
     window.setTimeout(function() {
