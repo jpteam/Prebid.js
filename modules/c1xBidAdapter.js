@@ -16,32 +16,34 @@ export const c1xAdapter = {
   // check the bids sent to c1x bidder
   isBidRequestValid: function(bid) {
     const siteId = window.c1x_pubtag.siteId || '';
-
     return (bid.adUnitCode && siteId);
   },
 
   buildRequests: function(bidRequests) {
     let payload = {};
+    let tagObj = {};
     const siteId = window.c1x_pubtag.siteId || '';
     const adunits = bidRequests.length;
     const rid = new Date().getTime();
 
     const c1xTags = bidRequests.map(bidToTag);
-    console.log('Show C1X Tags');
-    console.log(c1xTags);
+
+    // flattened tags in a tag object
+    tagObj = c1xTags.reduce((current, next) => Object.assign(current, next));
+    console.log(tagObj);
 
     payload = {
       siteId: siteId,
-      adunits: adunits,
-      rid: rid,
+      adunits: adunits.toString(),
+      rid: rid.toString(),
     }
+    Object.assign(payload, tagObj);
+    console.log(payload);
 
-    console.log(bidRequests);
-    let payloadString = 'site=1&adunits=1&a1=banner1&a1s=[728x90]&rid=1452866810&a1t=i&a1p=1.5';
-    payloadString = JSON.stringify(c1xTags);
-    console.log('Show Payload String: ');
+    let payloadString = stringifyPayload(payload);
     console.log(payloadString);
 
+    // ServerRequest object
     return {
       method: 'GET',
       url: URL,
@@ -82,6 +84,16 @@ function bidToTag(bid, index) {
   tag[sizeKey] = sizesArr.reduce((prev, current) => prev + (prev === '' ? '' : ',') + current.join('x'), '');
 
   return tag;
+}
+
+function stringifyPayload(payload) {
+  let payloadString = '';
+  payloadString = JSON.stringify(payload).replace(/":"|","|{"|"}/g, (foundChar) => {
+    if (foundChar == '":"') return '=';
+    else if (foundChar == '","') return '&';
+    else return '';
+  });
+  return payloadString;
 }
 
 registerBidder(c1xAdapter);
