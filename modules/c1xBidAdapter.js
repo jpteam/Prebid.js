@@ -4,6 +4,8 @@ import { registerBidder } from 'src/adapters/bidderFactory';
 
 const BIDDER_CODE = 'c1x';
 const URL = 'http://ht-integration.c1exchange.com:9000/ht';
+const PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/';
+const PIXEL_FIRE_DELAY = 3000;
 
 /**
  * Adapter for requesting bids from C1X header tag server.
@@ -52,7 +54,7 @@ export const c1xAdapter = {
   },
 
   // TO DO: Get JSON Responses from our bidder endpoint
-  interpretResponse: function(serverResponse, request) {
+  interpretResponse: function(serverResponse) {
     const bidResponses = [];
     const bidResponse = {
       requestId: '22222', // bidRequest.bidId,
@@ -71,13 +73,26 @@ export const c1xAdapter = {
     return bidResponses;
   },
 
-  getUserSyncs: function(syncOptions) {}
+  // Register pixels
+  getUserSyncs: function(syncOptions) {
+    const pixelId = window.c1x_pubtag.pixelId || '';
+    window.setTimeout(function() {
+      let pixel = document.createElement('img');
+      pixel.width = 1;
+      pixel.height = 1;
+      pixel.style = 'display:none;';
+      const useSSL = document.location.protocol;
+      pixel.src = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
+      document.body.insertBefore(pixel, null);
+    }, PIXEL_FIRE_DELAY);
+  }
 }
 
 function bidToTag(bid, index) {
   const tag = {};
   const adIndex = 'a' + (index + 1).toString(); // ad unit id for c1x
   const sizeKey = adIndex + 's';
+  // TODO: Floor Price, Ad Unit Types
   // const priceKey = adIndex + 'p';
   const sizesArr = bid.sizes;
   tag[adIndex] = bid.adUnitCode;
