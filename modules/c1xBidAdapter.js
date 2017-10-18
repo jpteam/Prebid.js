@@ -3,7 +3,7 @@ import { registerBidder } from 'src/adapters/bidderFactory';
 // import * as utils from 'src/utils';
 
 const BIDDER_CODE = 'c1x';
-const URL = 'http://ht-integration.c1exchange.com:9000/ht';
+const URL = 'http://13.58.47.152:8080/ht';
 const PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/';
 const PIXEL_FIRE_DELAY = 3000;
 
@@ -38,6 +38,8 @@ export const c1xAdapter = {
       siteId: siteId,
       adunits: adunits.toString(),
       rid: rid.toString(),
+      response: 'json',
+      compress: 'gzip'
     }
     Object.assign(payload, tagObj);
     console.log(payload);
@@ -73,7 +75,7 @@ export const c1xAdapter = {
     return bidResponses;
   },
 
-  // Register pixels
+  // Register user-sync pixels
   getUserSyncs: function(syncOptions) {
     const pixelId = window.c1x_pubtag.pixelId || '';
     window.setTimeout(function() {
