@@ -32,7 +32,6 @@ export const c1xAdapter = {
 
     // flattened tags in a tag object
     tagObj = c1xTags.reduce((current, next) => Object.assign(current, next));
-    console.log(tagObj);
 
     payload = {
       siteId: siteId,
@@ -94,11 +93,22 @@ function bidToTag(bid, index) {
   const tag = {};
   const adIndex = 'a' + (index + 1).toString(); // ad unit id for c1x
   const sizeKey = adIndex + 's';
-  // TODO: Floor Price, Ad Unit Types
-  // const priceKey = adIndex + 'p';
+  const priceKey = adIndex + 'p';
+  // TODO: Multiple Floor Prices
+
   const sizesArr = bid.sizes;
+  const floorPriceMap = bid.params.floorPriceMap || '';
   tag[adIndex] = bid.adUnitCode;
   tag[sizeKey] = sizesArr.reduce((prev, current) => prev + (prev === '' ? '' : ',') + current.join('x'), '');
+
+  const newSizeArr = tag[sizeKey].split(',');
+  if(floorPriceMap) {
+    newSizeArr.forEach( size => {
+      if(size in floorPriceMap) {
+        tag[priceKey] = floorPriceMap[size];
+      } // we only accept one cpm price in floorPriceMap
+    });
+  }
 
   return tag;
 }
