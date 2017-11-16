@@ -1,11 +1,17 @@
 // import CONSTANTS from 'src/constants.json';
 import { registerBidder } from 'src/adapters/bidderFactory';
-// import * as utils from 'src/utils';
+import * as utils from 'src/utils';
 
 const BIDDER_CODE = 'c1x';
 const URL = 'http://13.58.47.152:8080/ht';
 const PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/';
 const PIXEL_FIRE_DELAY = 3000;
+const LOG_MSG = {
+  invalidBid: 'C1X: ERROR bidder returns an invalid bid',
+  noSite: 'C1X: ERROR no site id supplied',
+  noBid: 'C1X: INFO creating a NO bid for Adunit: ',
+  bidWin: 'C1X: INFO creating a bid for Adunit: '
+};
 
 /**
  * Adapter for requesting bids from C1X header tag server.
@@ -18,6 +24,7 @@ export const c1xAdapter = {
   // check the bids sent to c1x bidder
   isBidRequestValid: function(bid) {
     const siteId = window.c1x_pubtag.siteId || '';
+    utils.logError(LOG_MSG.noSite);
     return (bid.adUnitCode && siteId);
   },
 
@@ -25,18 +32,22 @@ export const c1xAdapter = {
     let payload = {};
     let tagObj = {};
     const siteId = window.c1x_pubtag.siteId || '';
+    const pageUrl = window.c1x_pubtag.pageurl || '';
     const adunits = bidRequests.length;
-    const rid = new Date().getTime();
+    const rnd = new Date().getTime();
 
     const c1xTags = bidRequests.map(bidToTag);
+    const bidIdTags = bidRequests.map(bidToShortTag); // include only adUnitCode and bidId from request obj
+    console.log(bidIdTags);
 
     // flattened tags in a tag object
     tagObj = c1xTags.reduce((current, next) => Object.assign(current, next));
 
     payload = {
-      siteId: siteId,
+      site: siteId,
+      pageurl: pageUrl,
       adunits: adunits.toString(),
-      rid: rid.toString(),
+      rnd: rnd.toString(),
       response: 'json',
       compress: 'gzip'
     }
@@ -44,33 +55,54 @@ export const c1xAdapter = {
     console.log(payload);
 
     let payloadString = stringifyPayload(payload);
-    console.log(payloadString);
 
     // ServerRequest object
     return {
       method: 'GET',
       url: URL,
-      data: payloadString
+      data: payloadString,
+      bids: bidIdTags
     };
   },
 
-  // TO DO: Get JSON Responses from our bidder endpoint
-  interpretResponse: function(serverResponse) {
+  interpretResponse: function(serverResponse, requests) {
+    serverResponse = serverResponse.body;
+    requests = requests.bids;
+    const currency = 'USD';
     const bidResponses = [];
-    const bidResponse = {
-      requestId: '22222', // bidRequest.bidId,
-      bidderCode: 'c1x', // spec.code,
-      cpm: '2.5', // CPM,
-      width: '300', // WIDTH,
-      height: '250', // HEIGHT,
-      creativeId: '8999', // CREATIVE_ID,
-      dealId: '9999', // DEAL_ID,
-      currency: 'USD', // CURRENCY,
-      netRevenue: true,
-      ttl: '250', // TIME_TO_LIVE,
-      ad: '<html><h3>I am an ad</h3></html>', // CREATIVE_BODY
-    };
-    bidResponses.push(bidResponse);
+
+    if (!serverResponse || serverResponse.error) {
+      let errorMessage = serverResponse.error;
+      utils.logError(LOG_MSG.invalidBid + errorMessage);
+      return bidResponses;
+    } else {
+      serverResponse.forEach(bid => {
+        if (bid.bid) {
+          const curBid = {
+            width: bid.width,
+            height: bid.height,
+            cpm: bid.cpm,
+            ad: bid.ad,
+            creativeId: bid.crid,
+            currency: currency,
+            ttl: 300,
+            netRevenue: false, // net or gross?
+          };
+
+          for (let i = 0; i < requests.length; i++) {
+            if (bid.adId === requests[i].adUnitCode) {
+              curBid.requestId = requests[i].bidId;
+            }
+          }
+          utils.logInfo(LOG_MSG.bidWin + bid.adId + ' size: ' + curBid.width + 'x' + curBid.height);
+          bidResponses.push(curBid);
+        } else {
+          // no bid
+          utils.logInfo(LOG_MSG.noBid + bid.adId);
+        }
+      });
+    }
+
     return bidResponses;
   },
 
@@ -102,13 +134,21 @@ function bidToTag(bid, index) {
   tag[sizeKey] = sizesArr.reduce((prev, current) => prev + (prev === '' ? '' : ',') + current.join('x'), '');
 
   const newSizeArr = tag[sizeKey].split(',');
-  if(floorPriceMap) {
-    newSizeArr.forEach( size => {
-      if(size in floorPriceMap) {
-        tag[priceKey] = floorPriceMap[size];
+  if (floorPriceMap) {
+    newSizeArr.forEach(size => {
+      if (size in floorPriceMap) {
+        tag[priceKey] = floorPriceMap[size].toString();
       } // we only accept one cpm price in floorPriceMap
     });
   }
+
+  return tag;
+}
+
+function bidToShortTag(bid) {
+  const tag = {};
+  tag.adUnitCode = bid.adUnitCode;
+  tag.bidId = bid.bidId;
 
   return tag;
 }
