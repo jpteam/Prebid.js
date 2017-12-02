@@ -1,16 +1,16 @@
 // import CONSTANTS from 'src/constants.json';
 import { registerBidder } from 'src/adapters/bidderFactory';
 import * as utils from 'src/utils';
+import { userSync } from 'src/userSync';
 
 const BIDDER_CODE = 'c1x';
 const URL = 'http://13.58.47.152:8080/ht';
 const PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/';
-const PIXEL_FIRE_DELAY = 3000;
 const LOG_MSG = {
-  invalidBid: 'C1X: ERROR bidder returns an invalid bid',
-  noSite: 'C1X: ERROR no site id supplied',
-  noBid: 'C1X: INFO creating a NO bid for Adunit: ',
-  bidWin: 'C1X: INFO creating a bid for Adunit: '
+  invalidBid: 'C1X: [ERROR] bidder returns an invalid bid',
+  noSite: 'C1X: [ERROR] no site id supplied',
+  noBid: 'C1X: [INFO] creating a NO bid for Adunit: ',
+  bidWin: 'C1X: [INFO] creating a bid for Adunit: '
 };
 
 /**
@@ -23,29 +23,27 @@ export const c1xAdapter = {
 
   // check the bids sent to c1x bidder
   isBidRequestValid: function(bid) {
-    const siteId = window.c1x_pubtag.siteId || '';
-    utils.logError(LOG_MSG.noSite);
-    return (bid.adUnitCode && siteId);
+    const siteId = bid.params.siteId || '';
+    if (siteId) {
+      utils.logError(LOG_MSG.noSite);
+    }
+    return !!(bid.adUnitCode && siteId);
   },
 
   buildRequests: function(bidRequests) {
     let payload = {};
     let tagObj = {};
-    const siteId = window.c1x_pubtag.siteId || '';
-    const pageUrl = window.c1x_pubtag.pageurl || '';
     const adunits = bidRequests.length;
     const rnd = new Date().getTime();
-
     const c1xTags = bidRequests.map(bidToTag);
     const bidIdTags = bidRequests.map(bidToShortTag); // include only adUnitCode and bidId from request obj
-    console.log(bidIdTags);
 
     // flattened tags in a tag object
     tagObj = c1xTags.reduce((current, next) => Object.assign(current, next));
+    const pixelId = tagObj.pixelId;
+    const useSSL = document.location.protocol;
 
     payload = {
-      site: siteId,
-      pageurl: pageUrl,
       adunits: adunits.toString(),
       rnd: rnd.toString(),
       response: 'json',
@@ -55,6 +53,11 @@ export const c1xAdapter = {
     console.log(payload);
 
     let payloadString = stringifyPayload(payload);
+
+    if (pixelId) {
+      const pixelUrl = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
+      userSync.registerSync('image', BIDDER_CODE, pixelUrl);
+    }
 
     // ServerRequest object
     return {
@@ -76,6 +79,7 @@ export const c1xAdapter = {
       utils.logError(LOG_MSG.invalidBid + errorMessage);
       return bidResponses;
     } else {
+      console.log(serverResponse);
       serverResponse.forEach(bid => {
         if (bid.bid) {
           const curBid = {
@@ -104,20 +108,6 @@ export const c1xAdapter = {
     }
 
     return bidResponses;
-  },
-
-  // Register user-sync pixels
-  getUserSyncs: function(syncOptions) {
-    const pixelId = window.c1x_pubtag.pixelId || '';
-    window.setTimeout(function() {
-      let pixel = document.createElement('img');
-      pixel.width = 1;
-      pixel.height = 1;
-      pixel.style = 'display:none;';
-      const useSSL = document.location.protocol;
-      pixel.src = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
-      document.body.insertBefore(pixel, null);
-    }, PIXEL_FIRE_DELAY);
   }
 }
 
@@ -130,6 +120,13 @@ function bidToTag(bid, index) {
 
   const sizesArr = bid.sizes;
   const floorPriceMap = bid.params.floorPriceMap || '';
+  tag['site'] = bid.params.siteId || '';
+
+  // prevent pixelId becoming undefined when publishers don't fill this param in ad units they have on the same page
+  if (bid.params.pixelId) {
+    tag['pixelId'] = bid.params.pixelId
+  }
+
   tag[adIndex] = bid.adUnitCode;
   tag[sizeKey] = sizesArr.reduce((prev, current) => prev + (prev === '' ? '' : ',') + current.join('x'), '');
 
@@ -140,6 +137,9 @@ function bidToTag(bid, index) {
         tag[priceKey] = floorPriceMap[size].toString();
       } // we only accept one cpm price in floorPriceMap
     });
+  }
+  if (bid.params.pageurl) {
+    tag['pageurl'] = bid.params.pageurl;
   }
 
   return tag;
