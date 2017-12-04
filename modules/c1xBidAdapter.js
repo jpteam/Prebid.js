@@ -24,7 +24,7 @@ export const c1xAdapter = {
   // check the bids sent to c1x bidder
   isBidRequestValid: function(bid) {
     const siteId = bid.params.siteId || '';
-    if (siteId) {
+    if (!siteId) {
       utils.logError(LOG_MSG.noSite);
     }
     return !!(bid.adUnitCode && siteId);
@@ -50,7 +50,6 @@ export const c1xAdapter = {
       compress: 'gzip'
     }
     Object.assign(payload, tagObj);
-    console.log(payload);
 
     let payloadString = stringifyPayload(payload);
 
@@ -155,6 +154,7 @@ function bidToShortTag(bid) {
 
 function stringifyPayload(payload) {
   let payloadString = '';
+  console.log(payload);
   payloadString = JSON.stringify(payload).replace(/":"|","|{"|"}/g, (foundChar) => {
     if (foundChar == '":"') return '=';
     else if (foundChar == '","') return '&';
