@@ -99,5 +99,65 @@ describe('C1XAdapter', () => {
       const payloadObj = JSON.parse(originalPayload);
       expect(payloadObj.a1p).to.equal('4.35');
     });
+
+    it('should convert pageurl to proper form and attach to request', () => {
+      let bidRequest = Object.assign({},
+        bidRequests[0],
+        {
+          'params': {
+            'siteId': '9999',
+            'pageurl': 'http://c1exchange.com/'
+          }
+        });
+      const request = c1xAdapter.buildRequests([bidRequest]);
+      const originalPayload = parseRequest(request.data);
+      const payloadObj = JSON.parse(originalPayload);
+      expect(payloadObj.pageurl).to.equal('http://c1exchange.com/');
+    });
+  });
+
+  describe('interpretResponse', () => {
+    let response = {
+      'bid': true,
+      'cpm': 1.5,
+      'ad': '<!-- Creative -->',
+      'width': 300,
+      'height': 250,
+      'crid': '8888',
+      'adId': 'c1x-test'
+    };
+
+    it('should get correct bid response', () => {
+      let expectedResponse = [
+        {
+          width: 300,
+          height: 250,
+          cpm: 1.5,
+          ad: '<!-- Creative -->',
+          creativeId: '8888',
+          currency: 'USD',
+          ttl: 300,
+          netRevenue: false,
+          requestId: 'yyyy'
+        }
+      ];
+      let bidderRequest = {};
+      bidderRequest.bids = [
+        { adUnitCode: 'c1x-test',
+          bidId: 'yyyy' }
+      ];
+      let result = c1xAdapter.interpretResponse({ body: [response] }, bidderRequest);
+      expect(Object.keys(result[0])).to.have.members(Object.keys(expectedResponse[0]));
+    });
+
+    it('handles nobid responses', () => {
+      let response = {
+        bid: false,
+        adId: 'c1x-test'
+      };
+      let bidderRequest = {};
+      let result = c1xAdapter.interpretResponse({ body: [response] }, bidderRequest);
+      expect(result.length).to.equal(0);
+    });
   });
 });

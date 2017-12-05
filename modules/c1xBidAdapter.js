@@ -69,7 +69,7 @@ export const c1xAdapter = {
 
   interpretResponse: function(serverResponse, requests) {
     serverResponse = serverResponse.body;
-    requests = requests.bids;
+    requests = requests.bids || [];
     const currency = 'USD';
     const bidResponses = [];
 
