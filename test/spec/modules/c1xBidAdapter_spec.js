@@ -3,6 +3,7 @@ import { c1xAdapter } from 'modules/c1xBidAdapter';
 import { newBidder } from 'src/adapters/bidderFactory';
 
 const ENDPOINT = 'http://13.58.47.152:8080/ht';
+const BIDDER_CODE = 'c1x';
 
 describe('C1XAdapter', () => {
   const adapter = newBidder(c1xAdapter);
@@ -15,7 +16,7 @@ describe('C1XAdapter', () => {
 
   describe('isBidRequestValid', () => {
     let bid = {
-      'bidder': 'c1x',
+      'bidder': BIDDER_CODE,
       'adUnitCode': 'adunit-code',
       'sizes': [[300, 250], [300, 600]],
       'params': {
@@ -34,6 +35,69 @@ describe('C1XAdapter', () => {
         'siteId': null
       };
       expect(c1xAdapter.isBidRequestValid(bid)).to.equal(false);
+    });
+  });
+
+  describe('buildRequests', () => {
+    let bidRequests = [
+      {
+        'bidder': BIDDER_CODE,
+        'params': {
+          'siteId': '9999'
+        },
+        'adUnitCode': 'adunit-code',
+        'sizes': [[300, 250], [300, 600]],
+        'bidId': '30b31c1838de1e',
+        'bidderRequestId': '22edbae2733bf6',
+        'auctionId': '1d1a030790a475',
+      }
+    ];
+
+    const parseRequest = (data) => {
+      const parsedData = '{"' + data.replace(/=|&/g, (foundChar) => {
+        if (foundChar == '=') return '":"';
+        else if (foundChar == '&') return '","';
+      }) + '"}'
+      return parsedData;
+    };
+
+    it('sends bid request to ENDPOINT via GET', () => {
+      const request = c1xAdapter.buildRequests(bidRequests);
+      expect(request.url).to.equal(ENDPOINT);
+      expect(request.method).to.equal('GET');
+    });
+
+    it('should generate correct bid Id tag', () => {
+      const request = c1xAdapter.buildRequests(bidRequests);
+      expect(request.bids[0].adUnitCode).to.equal('adunit-code');
+      expect(request.bids[0].bidId).to.equal('30b31c1838de1e');
+    });
+
+    it('should convert params to proper form and attach to request', () => {
+      const request = c1xAdapter.buildRequests(bidRequests);
+      const originalPayload = parseRequest(request.data);
+      const payloadObj = JSON.parse(originalPayload);
+      expect(payloadObj.adunits).to.equal('1');
+      expect(payloadObj.a1s).to.equal('300x250,300x600');
+      expect(payloadObj.a1).to.equal('adunit-code');
+      expect(payloadObj.site).to.equal('9999');
+    });
+
+    it('should convert floor price to proper form and attach to request', () => {
+      let bidRequest = Object.assign({},
+        bidRequests[0],
+        {
+          'params': {
+            'siteId': '9999',
+            'floorPriceMap': {
+              '300x250': 4.35
+            }
+          }
+        });
+      const request = c1xAdapter.buildRequests([bidRequest]);
+      const originalPayload = parseRequest(request.data);
+      const payloadObj = JSON.parse(originalPayload);
+      expect(payloadObj.a1p).to.equal('4.35');
     });
   });
 });

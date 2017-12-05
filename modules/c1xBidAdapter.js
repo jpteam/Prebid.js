@@ -154,7 +154,6 @@ function bidToShortTag(bid) {
 
 function stringifyPayload(payload) {
   let payloadString = '';
-  console.log(payload);
   payloadString = JSON.stringify(payload).replace(/":"|","|{"|"}/g, (foundChar) => {
     if (foundChar == '":"') return '=';
     else if (foundChar == '","') return '&';
