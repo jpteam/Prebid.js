@@ -80,9 +80,11 @@
                   {
                       bidder: 'c1x',
                       params: {
+                        siteId: '9999',
+                        pixelId: '12345',
                         floorPriceMap: {
-                          '300x250': 4.00,
-                          '300x600': 3.00
+                          '300x250': 0.20,
+                          '300x600': 0.30
                         }, //optional
                       }
                   }
@@ -96,9 +98,10 @@
                   {
                       bidder: 'c1x',
                       params: {
+                        siteId: '9999',
                         placementID: "234234",
                         floorPriceMap: {
-                          '300x600': 3.00
+                          '300x600': 0.40
                         }
                       }
                   }
@@ -145,12 +148,6 @@
         }
       };
 
-      // Use our own tag instead of pbjs bidder settings
-      window.c1x_pubtag = {
-        siteId: '9999',
-        pixelId: '12345', //optional
-        endpoint: 'http://ht-integration.c1exchange.com:9000/ht', //optional,
-      };
 
       /* Request bids for the added ad units. If adUnits or adUnitCodes are
        not specified, the function will request bids for all added ad units.
