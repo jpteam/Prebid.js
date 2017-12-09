@@ -6,19 +6,24 @@ Maintainer: cathy@c1exchange.com
 
 # Description
 
-Module that connects to Example's demand sources
+Module that connects to C1X's demand sources
 
 # Test Parameters
 ```
   var adUnits = [
      {
          code: 'test-div',
-         sizes: [[300, 250]],  // a display size
+         sizes: [[300, 600], [300, 250]],
          bids: [
              {
                  bidder: 'c1x',
                  params: {
-                     placement: '12345'
+                    siteId: '9999',
+                    pixelId: '12345',
+                    floorPriceMap: {
+                      '300x250': 0.20,
+                      '300x600': 0.30
+                    }, //optional
                  }
              }
          ]
