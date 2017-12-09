@@ -4,7 +4,7 @@ import * as utils from 'src/utils';
 import { userSync } from 'src/userSync';
 
 const BIDDER_CODE = 'c1x';
-const URL = 'http://13.58.47.152:8080/ht';
+const URL = 'http://18.217.214.190:8080/ht';
 const PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/';
 const LOG_MSG = {
   invalidBid: 'C1X: [ERROR] bidder returns an invalid bid',
@@ -72,15 +72,18 @@ export const c1xAdapter = {
     requests = requests.bids || [];
     const currency = 'USD';
     const bidResponses = [];
+    let netRevenue = false;
 
     if (!serverResponse || serverResponse.error) {
       let errorMessage = serverResponse.error;
       utils.logError(LOG_MSG.invalidBid + errorMessage);
       return bidResponses;
     } else {
-      console.log(serverResponse);
       serverResponse.forEach(bid => {
         if (bid.bid) {
+          if (bid.bidType === 'NET_BID') {
+            netRevenue = !netRevenue;
+          }
           const curBid = {
             width: bid.width,
             height: bid.height,
@@ -89,7 +92,7 @@ export const c1xAdapter = {
             creativeId: bid.crid,
             currency: currency,
             ttl: 300,
-            netRevenue: false, // net or gross?
+            netRevenue: netRevenue
           };
 
           for (let i = 0; i < requests.length; i++) {

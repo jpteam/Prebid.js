@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { c1xAdapter } from 'modules/c1xBidAdapter';
 import { newBidder } from 'src/adapters/bidderFactory';
 
-const ENDPOINT = 'http://13.58.47.152:8080/ht';
+const ENDPOINT = 'http://18.217.214.190:8080/ht';
 const BIDDER_CODE = 'c1x';
 
 describe('C1XAdapter', () => {
@@ -124,7 +124,8 @@ describe('C1XAdapter', () => {
       'width': 300,
       'height': 250,
       'crid': '8888',
-      'adId': 'c1x-test'
+      'adId': 'c1x-test',
+      'bidType': 'GROSS_BID'
     };
 
     it('should get correct bid response', () => {
