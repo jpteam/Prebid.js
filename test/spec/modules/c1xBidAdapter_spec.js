@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { c1xAdapter } from 'modules/c1xBidAdapter';
 import { newBidder } from 'src/adapters/bidderFactory';
 
-const ENDPOINT = 'https://ht.c1exchange.com/ht';
+const ENDPOINT = 'http://18.188.247.241:8080/ht';
 const BIDDER_CODE = 'c1x';
 
 describe('C1XAdapter', () => {
@@ -113,6 +113,24 @@ describe('C1XAdapter', () => {
       const originalPayload = parseRequest(request.data);
       const payloadObj = JSON.parse(originalPayload);
       expect(payloadObj.pageurl).to.equal('http://c1exchange.com/');
+    });
+
+    it('should convert GDPR Consent to proper form and attach to request', () => {
+      let consentString = 'BOJ8RZsOJ8RZsABAB8AAAAAZA';
+      let bidderRequest = {
+        'bidderCode': 'c1x',
+        'gdprConsent': {
+          'consentString': consentString,
+          'gdprApplies': true
+        }
+      }
+      bidderRequest.bids = bidRequests;
+
+      const request = c1xAdapter.buildRequests(bidRequests, bidderRequest);
+      const originalPayload = parseRequest(request.data);
+      const payloadObj = JSON.parse(originalPayload);
+      expect(payloadObj['consent_string']).to.equal('BOJ8RZsOJ8RZsABAB8AAAAAZA');
+      expect(payloadObj['consent_required']).to.equal(true);
     });
   });
 
