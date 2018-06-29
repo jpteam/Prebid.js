@@ -3,7 +3,7 @@ import * as utils from 'src/utils';
 import { userSync } from 'src/userSync';
 
 const BIDDER_CODE = 'c1x';
-const URL = 'https://ht.c1exchange.com/ht';
+const URL = 'http://18.188.247.241:8080/ht';
 const PIXEL_ENDPOINT = '//px.c1exchange.com/pubpixel/';
 const LOG_MSG = {
   invalidBid: 'C1X: [ERROR] bidder returns an invalid bid',
@@ -52,13 +52,13 @@ export const c1xAdapter = {
 
     if (pixelId) {
       pixelUrl = (useSSL ? 'https:' : 'http:') + PIXEL_ENDPOINT + pixelId;
-      // userSync.registerSync('image', BIDDER_CODE, pixelUrl);
+      userSync.registerSync('image', BIDDER_CODE, pixelUrl);
     }
 
     // for GDPR support
     if (bidderRequest && bidderRequest.gdprConsent) {
       payload['consent_string'] = bidderRequest.gdprConsent.consentString;
-      payload['consent_required'] = (typeof bidderRequest.gdprConsent.gdprApplies === 'boolean') ? bidderRequest.gdprConsent.gdprApplies : true
+      payload['consent_required'] = (typeof bidderRequest.gdprConsent.gdprApplies === 'boolean') ? bidderRequest.gdprConsent.gdprApplies.toString() : 'true'
       ;
       if (pixelUrl) {
         pixelUrl += '&gdpr=' + (bidderRequest.gdprConsent.gdprApplies ? 1 : 0);
@@ -71,7 +71,6 @@ export const c1xAdapter = {
     }
 
     Object.assign(payload, tagObj);
-    console.log(payload);
 
     let payloadString = stringifyPayload(payload);
     // ServerRequest object

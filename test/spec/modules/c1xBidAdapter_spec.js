@@ -116,7 +116,7 @@ describe('C1XAdapter', () => {
     });
 
     it('should convert GDPR Consent to proper form and attach to request', () => {
-      let consentString = 'BOJ8RZsOJ8RZsABAB8AAAAAZA';
+      let consentString = 'BOP2gFWOQIFovABABAENBGAAAAAAMw';
       let bidderRequest = {
         'bidderCode': 'c1x',
         'gdprConsent': {
@@ -129,8 +129,8 @@ describe('C1XAdapter', () => {
       const request = c1xAdapter.buildRequests(bidRequests, bidderRequest);
       const originalPayload = parseRequest(request.data);
       const payloadObj = JSON.parse(originalPayload);
-      expect(payloadObj['consent_string']).to.equal('BOJ8RZsOJ8RZsABAB8AAAAAZA');
-      expect(payloadObj['consent_required']).to.equal(true);
+      expect(payloadObj['consent_string']).to.equal('BOP2gFWOQIFovABABAENBGAAAAAAMw');
+      expect(payloadObj['consent_required']).to.equal('true');
     });
   });
 
