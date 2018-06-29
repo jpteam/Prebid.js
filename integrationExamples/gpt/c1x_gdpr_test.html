@@ -82,41 +82,41 @@
       });
   </script>
 
-      <script>
-        var PREBID_TIMEOUT = 1000;
-  
-        var adUnits = [
-            {
-                code: 'div-gpt-ad-1529834101945-0',
-                mediaTypes: {
-                  banner: {
-                      sizes: [
-                          [300, 250],
-                          [300, 600]
-                      ]
-                  }
-                },
-                bids: [
-                    // 1 ad unit can be targeted by multiple bids.
-                    {
-                        bidder: 'c1x',
-                        params: {
-                          siteId: '9999',
-                          pixelId: '12345',
-                          floorPriceMap: {
-                            '300x250': 0.20,
-                            '300x600': 0.30
-                          }, //optional
-                        }
+  <script>
+    var PREBID_TIMEOUT = 1000;
+
+    var adUnits = [
+        {
+            code: 'div-gpt-ad-1529834101945-0',
+            mediaTypes: {
+              banner: {
+                  sizes: [
+                      [300, 250],
+                      [300, 600]
+                  ]
+              }
+            },
+            bids: [
+                // 1 ad unit can be targeted by multiple bids.
+                {
+                    bidder: 'c1x',
+                    params: {
+                      siteId: '281075',
+                      pixelId: '12345',
+                      floorPriceMap: {
+                        '300x250': 0.20,
+                        '300x600': 0.30
+                      }, //optional
                     }
-                ]
-            }
-        ];
-  
-        var pbjs = pbjs || {};
-        pbjs.que = pbjs.que || [];
-  
-      </script>
+                }
+            ]
+        }
+    ];
+
+    var pbjs = pbjs || {};
+    pbjs.que = pbjs.que || [];
+
+  </script>
   
       <script type="text/javascript"
         src="../../build/dev/prebid.js" async></script>
@@ -127,12 +127,14 @@
           googletag.pubads().disableInitialLoad();
         });
   
-        var consentData = window.__cmp('getConsentData');
-        console.log(consentData);
+        /*var consentData = window.__cmp('getConsentData', null, function(result) {
+          console.log('getConsentData callback result:\n' + JSON.stringify(result));
+        });*/
+
         pbjs.que.push(function() {
           pbjs.setConfig({
             consentManagement: {
-              cmpApi: 'appnexus',
+              cmpApi: 'iab',
               timeout: 8000,
               allowAuctionWithoutConsent: true
             },
@@ -146,7 +148,8 @@
             }],
             pubcid: {
               enable: false
-            }
+            },
+            debug: true
           });
           pbjs.addAdUnits(adUnits);
           pbjs.requestBids({
@@ -164,7 +167,7 @@
             });
           });
         }
-  
+
         // setTimeout(function() {
         //   sendAdserverRequest();
         //   console.log('timeout in main pbjs fired');
