@@ -119,7 +119,7 @@
   </script>
   
       <script type="text/javascript"
-        src="../../build/dev/prebid.js" async></script>
+        src="../../build/dist/prebid.js" async></script>
       <script>
         var googletag = googletag || {};
         googletag.cmd = googletag.cmd || [];
@@ -148,8 +148,7 @@
             }],
             pubcid: {
               enable: false
-            },
-            debug: true
+            }
           });
           pbjs.addAdUnits(adUnits);
           pbjs.requestBids({
