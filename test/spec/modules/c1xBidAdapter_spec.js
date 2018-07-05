@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { c1xAdapter } from 'modules/c1xBidAdapter';
 import { newBidder } from 'src/adapters/bidderFactory';
 
-const ENDPOINT = 'https://ht.c1exchange.com/ht';
+const ENDPOINT = 'http://18.188.247.241:8080/ht';
 const BIDDER_CODE = 'c1x';
 
 describe('C1XAdapter', () => {
